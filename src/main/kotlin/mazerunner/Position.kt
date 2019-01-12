@@ -1,5 +1,7 @@
 package mazerunner
 
+import org.springframework.core.io.buffer.DataBuffer
+
 data class Position(val current: Point,
                     val neighbors: Array<Point>) {
     override fun equals(other: Any?): Boolean {
@@ -20,4 +22,23 @@ data class Position(val current: Point,
         return result
     }
 
+}
+
+/**
+ * Serializes this object as: (x,y)[(x1,y1)...(xn,yn)]
+ */
+fun Position.writeTo(buffer: DataBuffer)  {
+    this.current.writeTo(buffer)
+    if (this.neighbors.isEmpty()) {
+        buffer.write("[]".toByteArray())
+        return
+    }
+
+    buffer.write('['.toByte())
+    for (p in this.neighbors) {
+        p.writeTo(buffer)
+        buffer.write(','.toByte())
+    }
+    buffer.writePosition(buffer.writePosition() - 1) // move one backwards
+    buffer.write(']'.toByte())
 }

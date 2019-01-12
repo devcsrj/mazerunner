@@ -1,10 +1,7 @@
 package mazerunner
 
 import mazerunner.MazeMovementWebSocketHandler.Companion.extractPoint
-import mazerunner.MazeMovementWebSocketHandler.Companion.writePosition
 import org.junit.Test
-import org.springframework.core.io.buffer.DataBuffer
-import org.springframework.core.io.buffer.DefaultDataBufferFactory
 import kotlin.test.assertEquals
 
 class MazeMovementWebSocketHandlerTest {
@@ -24,25 +21,4 @@ class MazeMovementWebSocketHandlerTest {
         assertEquals(actual, Point(-1, -1))
     }
 
-    @Test
-    fun `can serialize position`() {
-        val factory = DefaultDataBufferFactory()
-
-        var buffer = factory.allocateBuffer()
-        writePosition(Position(Point(0, 0), arrayOf()), buffer)
-        var written = readAsString(buffer)
-        assertEquals("(0,0)[]", written)
-
-        buffer = factory.allocateBuffer()
-        writePosition(Position(Point(0, 0), arrayOf(Point(1, 0))), buffer)
-        written = readAsString(buffer)
-        assertEquals("(0,0)[(1,0)]", written)
-
-        buffer = factory.allocateBuffer()
-        writePosition(Position(Point(0, 0), arrayOf(Point(1, 0), Point(0, 1))), buffer)
-        written = readAsString(buffer)
-        assertEquals("(0,0)[(1,0),(0,1)]", written)
-    }
-
-    private fun readAsString(buffer: DataBuffer) = String(buffer.asInputStream(true).readBytes())
 }

@@ -1,13 +1,14 @@
 package mazerunner
 
 import org.reactivestreams.Publisher
-import org.springframework.core.io.buffer.DataBuffer
 import org.springframework.core.io.buffer.DefaultDataBufferFactory
 import org.springframework.web.reactive.socket.CloseStatus
 import org.springframework.web.reactive.socket.WebSocketHandler
 import org.springframework.web.reactive.socket.WebSocketMessage
 import org.springframework.web.reactive.socket.WebSocketSession
 import reactor.core.publisher.Mono
+import reactor.core.publisher.TopicProcessor
+import reactor.util.concurrent.Queues
 import java.time.Duration
 import java.util.function.Function
 import java.util.regex.Pattern
@@ -30,8 +31,17 @@ import java.util.regex.Pattern
  *
  * @param factory the service containing the active maze and runners
  */
-class MazeMovementWebSocketHandler(private val factory: MazeRunnerFactory,
-                                   private val tagFunction: Function<WebSocketSession, Tag?>) : WebSocketHandler {
+class MazeMovementWebSocketHandler(
+        private val factory: MazeRunnerFactory,
+        private val tagFunction: Function<WebSocketSession, Tag?>,
+        private val eventPublisher: TopicProcessor<MazeMovementEvent>) : WebSocketHandler {
+
+    constructor(factory: MazeRunnerFactory, tagFunction: Function<WebSocketSession, Tag?>)
+            : this(factory, tagFunction, TopicProcessor.builder<MazeMovementEvent>()
+            .bufferSize(Queues.SMALL_BUFFER_SIZE)
+            .share(true)
+            .autoCancel(true)
+            .build())
 
     private val dataBufferFactory = DefaultDataBufferFactory()
 
@@ -43,11 +53,13 @@ class MazeMovementWebSocketHandler(private val factory: MazeRunnerFactory,
                 .map { received -> received.payloadAsText }
                 .map { payload -> extractPoint(payload) }
                 .map { point -> runner.move(point) }
+                .doOnNext { position -> eventPublisher.onNext(MazeMovementEvent(tag, MazeMovementEvent.Type.MOVED, position)) }
                 .map { position ->
                     val buffer = dataBufferFactory.allocateBuffer()
-                    writePosition(position, buffer)
+                    position.writeTo(buffer)
                     WebSocketMessage(WebSocketMessage.Type.TEXT, buffer)
                 }
+                .doOnError { eventPublisher.onNext(MazeMovementEvent(tag, MazeMovementEvent.Type.FAILED)) }
         )
     }
 
@@ -70,26 +82,6 @@ class MazeMovementWebSocketHandler(private val factory: MazeRunnerFactory,
             val x = Integer.parseInt(matcher.group(1))
             val y = Integer.parseInt(matcher.group(2))
             return Point(x, y)
-        }
-
-        fun writePosition(position: Position, buffer: DataBuffer) {
-            writePoint(position.current, buffer)
-            if (position.neighbors.isEmpty()) {
-                buffer.write("[]".toByteArray())
-                return
-            }
-
-            buffer.write('['.toByte())
-            for (p in position.neighbors) {
-                writePoint(p, buffer)
-                buffer.write(','.toByte())
-            }
-            buffer.writePosition(buffer.writePosition() - 1) // move one backwards
-            buffer.write(']'.toByte())
-        }
-
-        private fun writePoint(point: Point, buffer: DataBuffer) {
-            buffer.write("(${point.x},${point.y})".toByteArray())
         }
     }
 

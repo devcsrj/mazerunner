@@ -8,6 +8,8 @@ import org.springframework.web.reactive.handler.SimpleUrlHandlerMapping
 import org.springframework.web.reactive.socket.WebSocketHandler
 import org.springframework.web.reactive.socket.WebSocketSession
 import org.springframework.web.reactive.socket.server.support.WebSocketHandlerAdapter
+import reactor.core.publisher.TopicProcessor
+import reactor.util.concurrent.Queues
 import java.util.function.Function
 
 
@@ -24,18 +26,35 @@ open class Server {
     open fun tagFunction() = ExtractTagFromSessionHeader("x-runner-tag")
 
     @Bean
+    open fun positionTopicProcessor(): TopicProcessor<MazeMovementEvent> = TopicProcessor
+            .builder<MazeMovementEvent>()
+            .bufferSize(Queues.SMALL_BUFFER_SIZE)
+            .share(true)
+            .autoCancel(true)
+            .build()
+
+    @Bean
     open fun mazeMovementWebSocketHandler(mazeRunnerFactory: MazeRunnerFactory,
-                                          tagFunction: Function<WebSocketSession, Tag?>): WebSocketHandler {
-        return MazeMovementWebSocketHandler(mazeRunnerFactory, tagFunction)
+                                          tagFunction: Function<WebSocketSession, Tag?>,
+                                          positionTopicProcessor: TopicProcessor<MazeMovementEvent>): WebSocketHandler {
+        return MazeMovementWebSocketHandler(mazeRunnerFactory, tagFunction, positionTopicProcessor)
+    }
+
+    @Bean
+    open fun mazePositionWebSocketHandler(positionTopicProcessor: TopicProcessor<MazeMovementEvent>): WebSocketHandler {
+        return MazePositionWebSocketHandler(positionTopicProcessor)
     }
 
     @Bean
     open fun webSocketHandlerMapping(
-            mazeMovementWebSocketHandler: WebSocketHandler): SimpleUrlHandlerMapping {
+            mazeMovementWebSocketHandler: WebSocketHandler,
+            mazePositionWebSocketHandler: WebSocketHandler): SimpleUrlHandlerMapping {
 
         val mapping = SimpleUrlHandlerMapping()
         mapping.order = 1000
-        mapping.urlMap = mapOf("/maze/move" to mazeMovementWebSocketHandler)
+        mapping.urlMap = mapOf(
+                "/maze/move" to mazeMovementWebSocketHandler,
+                "/maze/positions" to mazePositionWebSocketHandler)
         return mapping
     }
 
