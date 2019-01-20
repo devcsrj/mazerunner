@@ -4,6 +4,9 @@ import de.amr.easy.grid.impl.OrthogonalGrid
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.context.annotation.Bean
+import org.springframework.http.MediaType
+import org.springframework.web.reactive.function.server.ServerResponse
+import org.springframework.web.reactive.function.server.router
 import org.springframework.web.reactive.handler.SimpleUrlHandlerMapping
 import org.springframework.web.reactive.socket.WebSocketHandler
 import org.springframework.web.reactive.socket.WebSocketSession
@@ -61,6 +64,13 @@ open class Server {
     @Bean
     open fun webSocketHandlerAdapter() = WebSocketHandlerAdapter()
 
+    @Bean
+    open fun routes(props: MazeProperties) = router {
+        GET("/maze/info") {
+            val info = "{\"columns\":${props.columns},\"rows\":${props.rows}}"
+            ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).syncBody(info)
+        }
+    }
 
 }
 

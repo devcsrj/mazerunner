@@ -37,7 +37,7 @@ class GridMazeRunnerTest {
             val actual = runner.move(Point(1, 0))
             fail()
         } catch (ex: IllegalArgumentException) {
-            assertEquals("It's impossible for RJ to move from cell '0' to '1'", ex.message)
+            assertEquals("It's impossible for RJ to move from (0, 0) to (1, 0)", ex.message)
         }
 
         assertEquals(runner.getState(0), TraversalState.VISITED)

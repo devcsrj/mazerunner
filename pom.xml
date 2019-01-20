@@ -31,10 +31,6 @@
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-integration</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webflux</artifactId>
         </dependency>
 
@@ -116,7 +112,7 @@
                 <artifactId>frontend-maven-plugin</artifactId>
                 <version>1.6</version>
                 <configuration>
-                    <nodeVersion>v8.0.0</nodeVersion>
+                    <nodeVersion>v8.11.0</nodeVersion>
                     <yarnVersion>v1.3.2</yarnVersion>
 
                     <workingDirectory>src/main/frontend</workingDirectory>

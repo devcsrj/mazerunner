@@ -17,15 +17,10 @@ class MazePositionWebSocketHandler(private val eventPublisher: TopicProcessor<Ma
     private val dataBufferFactory = DefaultDataBufferFactory()
 
     override fun handle(session: WebSocketSession): Mono<Void> {
-        val subscription = eventPublisher.subscribe { event ->
-            session.send {
-                val buffer = dataBufferFactory.allocateBuffer()
-                event.writeTo(buffer)
-                WebSocketMessage(WebSocketMessage.Type.TEXT, buffer)
-            }.subscribe()
-        }
-        return Mono.never<Void>().doOnTerminate {
-            subscription.dispose()
-        }
+        return session.send(eventPublisher.map { event ->
+            val buffer = dataBufferFactory.allocateBuffer()
+            event.writeTo(buffer)
+            WebSocketMessage(WebSocketMessage.Type.TEXT, buffer)
+        })
     }
 }

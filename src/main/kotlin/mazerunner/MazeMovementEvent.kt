@@ -4,9 +4,10 @@ import org.springframework.core.io.buffer.DataBuffer
 
 data class MazeMovementEvent(val tag: Tag,
                              val type: Type,
+                             val message: String,
                              val position: Position?) {
 
-    constructor(tag: Tag, type: Type) : this(tag, type, null)
+    constructor(tag: Tag, type: Type, message: String) : this(tag, type, message, null)
 
     enum class Type {
         MOVED,
@@ -33,5 +34,7 @@ fun MazeMovementEvent.writeTo(buffer: DataBuffer) {
     if (this.position != null) {
         buffer.write("position=".toByteArray())
         position.writeTo(buffer)
+        buffer.write(';'.toByte())
     }
+    buffer.write("message=${this.message}".toByteArray())
 }

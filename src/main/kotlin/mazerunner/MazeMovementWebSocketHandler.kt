@@ -53,13 +53,19 @@ class MazeMovementWebSocketHandler(
                 .map { received -> received.payloadAsText }
                 .map { payload -> extractPoint(payload) }
                 .map { point -> runner.move(point) }
-                .doOnNext { position -> eventPublisher.onNext(MazeMovementEvent(tag, MazeMovementEvent.Type.MOVED, position)) }
+                .doOnNext {
+                    val e = MazeMovementEvent(tag, MazeMovementEvent.Type.MOVED, "OK", it)
+                    eventPublisher.onNext(e)
+                }
                 .map { position ->
                     val buffer = dataBufferFactory.allocateBuffer()
                     position.writeTo(buffer)
                     WebSocketMessage(WebSocketMessage.Type.TEXT, buffer)
                 }
-                .doOnError { eventPublisher.onNext(MazeMovementEvent(tag, MazeMovementEvent.Type.FAILED)) }
+                .doOnError {
+                    val e = MazeMovementEvent(tag, MazeMovementEvent.Type.FAILED, it.message!!)
+                    eventPublisher.onNext(e)
+                }
         )
     }
 

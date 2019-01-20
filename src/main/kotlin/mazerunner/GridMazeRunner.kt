@@ -49,7 +49,10 @@ class GridMazeRunner(private val tag: Tag,
         val destCell = cellOn(point)
         if (srcCell != destCell)
             require(grid.adjacent(srcCell, destCell)) {
-                "It's impossible for ${tag.name} to move from cell '$srcCell' to '$destCell'"
+                val from = pointOf(srcCell)
+                val to = pointOf(destCell)
+                "It's impossible for ${tag.name} to move from (${from.x}, ${from.y}) " +
+                        "to (${to.x}, ${to.y})"
             }
         setState(destCell, TraversalState.VISITED)
         currentCell = destCell
@@ -61,6 +64,7 @@ class GridMazeRunner(private val tag: Tag,
 
     private fun neighborsOf(cell: Int) = grid
             .neighbors(cell)
+            .filter { grid.adjacent(it, cell) }
             .mapToObj { pointOf(it) }
             .toArray<Point> { length -> arrayOfNulls(length) }
 }
