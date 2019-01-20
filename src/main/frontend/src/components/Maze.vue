@@ -17,7 +17,7 @@
 		reconnect: true
 	});
 
-	const windowPad = 50;
+	const windowPad = 4;
 	const width = window.innerWidth;
 	const height = window.innerHeight;
 
@@ -31,18 +31,51 @@
 			this.x = x;
 			this.y = y;
 		}
+
+		toString() {
+			return "(" + this.x + ", " + this.y + ")";
+		}
+	}
+
+	class Dimension {
+
+		constructor(height, width) {
+			this.height = height;
+			this.width = width;
+		}
 	}
 
 	class Room {
 
 		/**
 		 *
-		 * @param shape the Konva.Shape
+		 * @param dimension dimensions of the room
 		 * @param point the location of this room in the maze
+		 * @param layer the Konva layer
 		 */
-		constructor(shape, point) {
-			this.shape = shape;
+		constructor(dimension, point, layer) {
 			this.point = point;
+			this.layer = layer;
+			this.shape = null;
+
+			const vm = this;
+			const imageObj = new Image();
+			imageObj.onload = new function () {
+				vm.shape = new Konva.Image({
+					x: dimension.width * point.x,
+					y: dimension.height * point.y,
+					height: dimension.height,
+					width: dimension.width,
+					image: imageObj,
+				});
+				layer.add(vm.shape);
+				layer.draw();
+			};
+			imageObj.src = '/dungeon-tile.png';
+		}
+
+		toString() {
+			return "Room(" + this.point + ")";
 		}
 	}
 
@@ -63,14 +96,85 @@
 
 			const vm = this;
 			const image = new Image();
-			image.src = 'https://api.adorable.io/avatars/60/' + id;
+			image.src = '/ninja.png';
 			image.onload = new function () {
-				vm.avatar = new Konva.Image({
+				vm.avatar = new Konva.Sprite({
 					image: image,
-					width: 60,
-					height: 60
+					animation: 'idle',
+					animations: {
+						idle: [
+							// x, y, width, height
+							6, 6, 52, 134
+						],
+						runLeft: [
+							6, 149, 97, 96,
+							110, 149, 111, 99,
+							229, 149, 134, 94,
+							371, 149, 136, 102,
+							515, 149, 123, 99,
+							646, 149, 83, 98,
+							737, 149, 131, 94,
+							876, 149, 140, 102,
+							1024, 149, 140, 102
+						],
+						runRight: [
+							6, 149, 97, 96,
+							110, 149, 111, 99,
+							229, 149, 134, 94,
+							371, 149, 136, 102,
+							515, 149, 123, 99,
+							646, 149, 83, 98,
+							737, 149, 131, 94,
+							876, 149, 140, 102,
+							1024, 149, 140, 102
+						],
+						runUp: [
+							222, 280, 52, 108,
+							281, 280, 57, 122,
+							345, 280, 48, 133,
+							400, 280, 41, 135,
+							448, 280, 40, 122,
+							495, 280, 47, 108,
+							549, 280, 56, 124,
+							612, 280, 52, 131,
+							671, 280, 50, 126,
+							728, 280, 50, 126
+						],
+						runDown: [
+							270, 6, 50, 108,
+							327, 6, 51, 97,
+							385, 6, 57, 80,
+							449, 6, 49, 77,
+							504, 6, 41, 72,
+							552, 6, 40, 109,
+							599, 6, 47, 96,
+							653, 6, 56, 82,
+							716, 6, 52, 94,
+							775, 6, 50, 108,
+						],
+						teleport: [
+							1703, 602, 136, 258
+						],
+						dying: [
+							1253, 602, 108, 124,
+							1368, 602, 106, 107,
+							1481, 602, 103, 86,
+							1591, 602, 105, 83,
+							382, 602, 147, 132,
+							536, 602, 199, 165,
+							742, 602, 137, 140,
+							886, 602, 154, 160,
+							1047, 602, 159, 171,
+							1213, 602, 33, 29
+						]
+					},
+					frameRate: 20,
+					frameIndex: 0,
+					height: 137,
+					width: 53
 				});
 				layer.add(vm.avatar);
+				vm.avatar.start();
 			};
 			this.layer = layer;
 		}
@@ -84,16 +188,15 @@
 				return; // :(
 			const vm = this;
 			const stage = room.shape.getStage();
-			const velocity = 150;
-			const time = 1000; // millis, how long to move to rooms
+			const roomSize = room.shape.getSize();
 
+			const velocity = 10;
 			vm.animation = vm.animation.then(function () {
 				return new Promise((resolve, reject) => {
 					const anim = new Konva.Animation(function (frame) {
-						const roomSize = room.shape.getSize();
 						const center = (function () {
-							const cx = roomSize.width - vm.avatar.width();
-							const cy = roomSize.height - vm.avatar.height();
+							const cx = Math.round(roomSize.width - vm.avatar.width());
+							const cy = Math.round(roomSize.height - vm.avatar.height());
 							return {
 								x: room.shape.x() + (cx / 2),
 								y: room.shape.y() + (cy / 2)
@@ -102,22 +205,37 @@
 
 						const dx = center.x - vm.avatar.x();
 						const dy = center.y - vm.avatar.y();
-						let dist = velocity * (frame.timeDiff / time);
-						if (dx > roomSize.width * 2 || dy > roomSize.height * 2)
+						let tooFast = false;
+						let dist = velocity * (frame.time / 1000);
+						if (dx > roomSize.width * 2 || dy > roomSize.height * 2) {
 							dist *= 50; // faster
+							tooFast = true;
+						}
 
-						const mx = dx < 0 ? Math.max(-dist, dx) : Math.min(dist, dx);
-						const my = dy < 0 ? Math.max(-dist, dy) : Math.min(dist, dy);
+						let mx = dx < 0 ? Math.max(-dist, dx) : Math.min(dist, dx);
+						let my = dy < 0 ? Math.max(-dist, dy) : Math.min(dist, dy);
 
 						if (Math.round(dx) === 0 && Math.round(dy) === 0) {
 							anim.stop();
+							vm.avatar.animation('idle');
 							resolve(vm); // we're done
+						} else if (tooFast) {
+							vm.avatar.animation('teleport');
+						} else {
+							vm.avatar.offsetX(vm.avatar.width() / 2);
+							if (mx !== 0) {
+								vm.avatar.scaleX(mx < 0 ? 1 : -1);
+								vm.avatar.animation(mx < 0 ? 'runLeft' : 'runRight');
+							}
+							if (my !== 0)
+								vm.avatar.animation(my < 0 ? 'runUp' : 'runDown');
 						}
+
 						vm.avatar.move({
 							x: mx,
 							y: my
 						});
-						vm.layer.draw();
+						return true;
 					}, stage);
 					anim.start();
 				})
@@ -133,13 +251,12 @@
 			const vm = this;
 			vm.animation = vm.animation.then(function () {
 				return new Promise((resolve, reject) => {
-					const anim = new Konva.Animation(function (frame) {
+					vm.avatar.animation('dying');
+					setTimeout(function () {
 						vm.layer.removeChildren(vm.avatar);
 						vm.layer.draw();
-						anim.stop();
 						resolve(vm);
-					});
-					anim.start();
+					}, 400); // FIXME compute timeout
 				});
 			});
 			return vm.animation;
@@ -189,25 +306,20 @@
 		 * @param stage the Konva.Stage
 		 */
 		init(stage) {
-			const roomPadding = 0.25;
-			const roomHeight = (stage.height() / this.rows) - roomPadding;
-			const roomWidth = (stage.width() / this.columns) - roomPadding;
+			const roomHeight = (stage.height() / this.rows);
+			const roomWidth = (stage.width() / this.columns);
 
 			let layer = new Konva.Layer();
 			let rooms = [];
 			for (let row = 0; row < this.rows; row++) {
 				let hall = [];
 				for (let column = 0; column < this.columns; column++) {
-					let rect = new Konva.Rect({
-						x: roomWidth * column,
-						y: roomHeight * row,
-						height: roomHeight - windowPad / 4,
-						width: roomWidth - windowPad / 4,
-						fill: 'red',
-						shadowBlur: 10
-					});
-					layer.add(rect);
-					hall.push(new Room(rect, new Point(column, row)));
+					hall.push(
+						new Room(
+							new Dimension(roomHeight, roomWidth),
+							new Point(column, row),
+							layer)
+					);
 				}
 				rooms.push(hall);
 			}
@@ -223,7 +335,7 @@
 				|| new Runner(position.runnerId, position.runnerName, this.runnersLayer);
 
 			if (position.type === 'MOVED') {
-				const room = this.rooms[position.point.x][position.point.y];
+				const room = this.rooms[position.point.y][position.point.x];
 				this.runners[hash].moveTo(room);
 			} else if (position.type === 'FAILED') {
 				const runner = this.runners[hash];
