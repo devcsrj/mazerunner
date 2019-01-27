@@ -17,7 +17,7 @@ class GridMazeRunner(private val tag: Tag,
     private var currentCell: Int? = null
 
     init {
-        currentCell = cellOn(start)
+        currentCell = grid.cellOn(start)
         goTo(start)
         logger.info("${tag.name} starts at cell '$currentCell'")
     }
@@ -30,7 +30,7 @@ class GridMazeRunner(private val tag: Tag,
         require(currentCell == source) {
             "${tag.name} is currently on cell '$currentCell', and not on $source"
         }
-        goTo(pointOf(target))
+        goTo(grid.pointOf(target))
     }
 
     override fun move(destination: Point): Position {
@@ -40,17 +40,13 @@ class GridMazeRunner(private val tag: Tag,
         return currentPosition()
     }
 
-    private fun cellOn(point: Point) = grid.cell(point.x, point.y)
-
-    private fun pointOf(cell: Int) = Point(grid.col(cell), grid.row(cell))
-
     private fun goTo(point: Point) {
         val srcCell = currentCell!!
-        val destCell = cellOn(point)
+        val destCell = grid.cellOn(point)
         if (srcCell != destCell)
             require(grid.adjacent(srcCell, destCell)) {
-                val from = pointOf(srcCell)
-                val to = pointOf(destCell)
+                val from = grid.pointOf(srcCell)
+                val to = grid.pointOf(destCell)
                 "It's impossible for ${tag.name} to move from (${from.x}, ${from.y}) " +
                         "to (${to.x}, ${to.y})"
             }
@@ -59,12 +55,12 @@ class GridMazeRunner(private val tag: Tag,
     }
 
     private fun currentPosition() = Position(
-            current = pointOf(currentCell!!),
+            current = grid.pointOf(currentCell!!),
             neighbors = neighborsOf(currentCell!!))
 
     private fun neighborsOf(cell: Int) = grid
             .neighbors(cell)
             .filter { grid.adjacent(it, cell) }
-            .mapToObj { pointOf(it) }
+            .mapToObj { grid.pointOf(it) }
             .toArray<Point> { length -> arrayOfNulls(length) }
 }

@@ -65,9 +65,15 @@ open class Server {
     open fun webSocketHandlerAdapter() = WebSocketHandlerAdapter()
 
     @Bean
-    open fun routes(props: MazeProperties) = router {
+    open fun routes(props: MazeProperties,
+                    activeMaze: OrthogonalGrid) = router {
         GET("/maze/info") {
             val info = "{\"columns\":${props.columns},\"rows\":${props.rows}}"
+            ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).syncBody(info)
+        }
+        GET("/maze/goal") {
+            val point = activeMaze.centerPoint()
+            val info = "{\"x\":${point.x},\"y\":${point.y}}"
             ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).syncBody(info)
         }
     }

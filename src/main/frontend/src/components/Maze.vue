@@ -45,6 +45,9 @@
 		}
 	}
 
+	/**
+	 * A typical room
+	 */
 	class Room {
 
 		/**
@@ -76,6 +79,32 @@
 
 		toString() {
 			return "Room(" + this.point + ")";
+		}
+	}
+
+	/**
+	 * A room that has a goal marker
+	 */
+	class GoalRoom extends Room {
+
+		constructor(dimension, point, layer) {
+			super(dimension, point, layer);
+			this.marker = null;
+
+			const vm = this;
+			const imageObj = new Image();
+			imageObj.onload = function () {
+				vm.marker = new Konva.Image({
+					image: imageObj,
+					x: dimension.width * point.x,
+					y: dimension.height * point.y,
+					height: dimension.height,
+					width: dimension.width
+				});
+				layer.add(vm.marker);
+				layer.draw();
+			};
+			imageObj.src = '/alchemy-circle.png';
 		}
 	}
 
@@ -304,8 +333,9 @@
 		/**
 		 *
 		 * @param stage the Konva.Stage
+		 * @param goal the goal Point
 		 */
-		init(stage) {
+		init(stage, goal) {
 			const roomHeight = (stage.height() / this.rows);
 			const roomWidth = (stage.width() / this.columns);
 
@@ -314,12 +344,15 @@
 			for (let row = 0; row < this.rows; row++) {
 				let hall = [];
 				for (let column = 0; column < this.columns; column++) {
-					hall.push(
-						new Room(
-							new Dimension(roomHeight, roomWidth),
-							new Point(column, row),
-							layer)
-					);
+					const pt = new Point(column, row);
+					const dim = new Dimension(roomHeight, roomWidth);
+					let room = null;
+					if (goal.x === pt.x && goal.y === pt.y) {
+						room = new GoalRoom(dim, pt, layer);
+					} else {
+						room = new Room(dim, pt, layer);
+					}
+					hall.push(room);
 				}
 				rooms.push(hall);
 			}
@@ -364,14 +397,18 @@
 			const mazeRef = this.$refs.maze;
 
 			// load maze info
-			this.$http.get("/maze/info").then(response => {
-				const info = response.body;
-				vm.maze = new Maze(info.columns, info.rows);
-				vm.maze.init(mazeRef.getStage());
-				vm.$options.sockets.onmessage = function (event) {
-					const position = vm.parsePosition(event.data);
-					vm.maze.update(position);
-				}
+			vm.$http.get("/maze/info").then(infoResponse => {
+				return vm.$http.get("/maze/goal").then(goalResponse => {
+					const info = infoResponse.body;
+					vm.maze = new Maze(info.columns, info.rows);
+
+					const goal = new Point(goalResponse.body.x, goalResponse.body.y);
+					vm.maze.init(mazeRef.getStage(), goal);
+					vm.$options.sockets.onmessage = function (event) {
+						const position = vm.parsePosition(event.data);
+						vm.maze.update(position);
+					};
+				});
 			});
 		},
 		methods: {

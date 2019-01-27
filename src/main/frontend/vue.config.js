@@ -4,6 +4,9 @@ module.exports = {
 			'^/maze/info': {
 				target: 'http://localhost:8080'
 			},
+			'^/maze/goal': {
+				target: 'http://localhost:8080'
+			},
 			'^/maze/positions': {
 				target: 'http://localhost:8080',
 				ws: true
