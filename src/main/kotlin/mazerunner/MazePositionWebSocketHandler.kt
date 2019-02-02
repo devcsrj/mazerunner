@@ -4,6 +4,7 @@ import org.springframework.core.io.buffer.DefaultDataBufferFactory
 import org.springframework.web.reactive.socket.WebSocketHandler
 import org.springframework.web.reactive.socket.WebSocketMessage
 import org.springframework.web.reactive.socket.WebSocketSession
+import reactor.core.publisher.DirectProcessor
 import reactor.core.publisher.Mono
 import reactor.core.publisher.TopicProcessor
 
@@ -17,7 +18,18 @@ class MazePositionWebSocketHandler(private val eventPublisher: TopicProcessor<Ma
     private val dataBufferFactory = DefaultDataBufferFactory()
 
     override fun handle(session: WebSocketSession): Mono<Void> {
-        return session.send(eventPublisher.map { event ->
+        val processor = DirectProcessor.create<MazeMovementEvent>()
+        val subscription = eventPublisher
+                .doOnNext { processor.onNext(it) }
+                .doOnError { processor.onError(it) }
+                .doOnComplete { processor.onComplete() }
+                .subscribe()
+
+        session.receive().doFinally {
+            subscription.dispose()
+        }.subscribe()
+
+        return session.send(processor.map { event ->
             val buffer = dataBufferFactory.allocateBuffer()
             event.writeTo(buffer)
             WebSocketMessage(WebSocketMessage.Type.TEXT, buffer)
