@@ -23,7 +23,7 @@ func (pos *position) IsAdjacent(point point) bool {
 }
 
 type node struct {
-	cost  int
+	cost  float64
 	point point
 
 	index int // The index of the item in the heap.

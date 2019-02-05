@@ -1,6 +1,9 @@
 package main
 
-import "math"
+import (
+	"math"
+	"math/rand"
+)
 
 type heuristic interface {
 	compute(src point, dest point) float64
@@ -12,6 +15,12 @@ type fixed struct {
 
 func (h fixed) compute(src point, dest point) float64 {
 	return h.value
+}
+
+type random struct {}
+
+func (r random) compute(src point, dest point) float64 {
+	return float64(rand.Intn(5))
 }
 
 type manhattan struct{}

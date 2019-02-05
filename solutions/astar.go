@@ -17,7 +17,10 @@ import (
 var addr = flag.String("addr", "localhost:8999", "address")
 var id = flag.String("id", "ninja", "The runner id")
 var name = flag.String("name", "TOGO", "The runner name")
-var h = flag.String("heuristic", "manhattan", "Heuristics to use [fixed, manhattan, diagonal, euclidian]")
+var h = flag.String("heuristic", "manhattan", "Heuristics to use [fixed, random, manhattan, diagonal, euclidian]")
+var verbose = flag.Bool("verbose", false, "Whether to dump the coordinates")
+
+var numberOfMoves = 0
 
 func main() {
 	flag.Parse()
@@ -26,7 +29,9 @@ func main() {
 	signal.Notify(interrupt, os.Interrupt, os.Kill)
 
 	u := url.URL{Scheme: "ws", Host: *addr, Path: "/maze/move"}
-	log.Printf("connecting to %s", u.String())
+	if *verbose {
+		log.Printf("connecting to %s", u.String())
+	}
 
 	conn, _, err := websocket.DefaultDialer.Dial(u.String(), http.Header{
 		"x-runner-tag": []string{*id + ":" + *name},
@@ -35,6 +40,8 @@ func main() {
 		log.Fatal("dial:", err)
 	}
 	defer conn.Close()
+
+	fmt.Printf("[%s] Solving maze with %s\n", *name, *h)
 
 	done := make(chan struct{})
 	go func() {
@@ -67,7 +74,7 @@ func solve(conn websocket.Conn, alg heuristic) {
 	goal := goal()
 	frontier := make(PriorityQueue, 0)
 	cameFrom := make(map[point]position)
-	costSoFar := make(map[point]int)
+	costSoFar := make(map[point]float64)
 
 	// Put starting node to open
 	position := whereAmI(conn)
@@ -78,7 +85,7 @@ func solve(conn websocket.Conn, alg heuristic) {
 
 		next := frontier.Pop().(*node)
 		if next.point == goal {
-			fmt.Println("I won!")
+			fmt.Printf("I won, after %d moves\n", numberOfMoves)
 			break // we're done
 		}
 
@@ -93,7 +100,7 @@ func solve(conn websocket.Conn, alg heuristic) {
 			newCost := costSoFar[next.point] + movementCost(next.point, neighbor)
 			if currentCost, existing := costSoFar[neighbor]; !existing || newCost < currentCost {
 				costSoFar[neighbor] = newCost
-				h := int(alg.compute(neighbor, goal))
+				h := alg.compute(neighbor, goal)
 				frontier.Push(&node{cost: newCost + h, point: neighbor})
 
 				cameFrom[neighbor] = *position
@@ -128,11 +135,11 @@ func retrace(src point, dest point, routes map[point]position, conn websocket.Co
 	return pos
 }
 
-func movementCost(src point, dest point) int {
+func movementCost(src point, dest point) float64 {
 	if src == dest {
-		return 0
+		return 0.0
 	}
-	return 1
+	return 1.0
 }
 
 func goal() point {
@@ -160,6 +167,7 @@ func whereAmI(conn websocket.Conn) *position {
 // Sends point as to connection in the form of: (x,y)
 // Then constructs a position based from a response payload of: (10,10)[(10,9),(9,10)]
 func moveTo(pt point, conn websocket.Conn) *position {
+	numberOfMoves++
 	payload := fmt.Sprintf("(%d,%d)", pt.x, pt.y)
 	err := conn.WriteMessage(websocket.TextMessage, []byte(payload))
 	if err != nil {
@@ -170,7 +178,9 @@ func moveTo(pt point, conn websocket.Conn) *position {
 	if err != nil {
 		panic(err)
 	}
-	log.Printf("recv: %s", message)
+	if *verbose {
+		log.Printf("recv: %s", message)
+	}
 
 	// Receive
 	points := make([]point, 0)
@@ -207,6 +217,8 @@ func parseHeuristic(str string) heuristic {
 	switch str {
 	case "fixed":
 		return fixed{1}
+	case "random":
+		return random{}
 	case "manhattan":
 		return manhattan{}
 	case "diagonal":
