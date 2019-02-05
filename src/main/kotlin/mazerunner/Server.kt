@@ -1,5 +1,6 @@
 package mazerunner
 
+import de.amr.easy.grid.api.GridPosition
 import de.amr.easy.grid.impl.OrthogonalGrid
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.SpringBootApplication
@@ -14,6 +15,7 @@ import org.springframework.web.reactive.socket.server.support.WebSocketHandlerAd
 import reactor.core.publisher.TopicProcessor
 import reactor.util.concurrent.Queues
 import java.util.function.Function
+import java.util.function.Supplier
 
 
 @SpringBootApplication
@@ -23,7 +25,10 @@ open class Server {
     open fun activeMaze(props: MazeProperties) = KruskalMazeGenerator(props.columns, props.rows).createMaze(0, 0)
 
     @Bean
-    open fun mazeRunnerService(activeMaze: OrthogonalGrid) = GridMazeRunnerFactory(activeMaze)
+    open fun goal(activeMaze: OrthogonalGrid) = activeMaze.pointOf(GridPosition.BOTTOM_RIGHT)
+
+    @Bean
+    open fun mazeRunnerService(activeMaze: OrthogonalGrid) = GridMazeRunnerFactory(activeMaze, Supplier { GridPosition.TOP_LEFT })
 
     @Bean
     open fun tagFunction() = ExtractTagFromSessionHeader("x-runner-tag")
@@ -66,14 +71,13 @@ open class Server {
 
     @Bean
     open fun routes(props: MazeProperties,
-                    activeMaze: OrthogonalGrid) = router {
+                    goal: Point) = router {
         GET("/maze/info") {
             val info = "{\"columns\":${props.columns},\"rows\":${props.rows}}"
             ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).syncBody(info)
         }
         GET("/maze/goal") {
-            val point = activeMaze.centerPoint()
-            val info = "{\"x\":${point.x},\"y\":${point.y}}"
+            val info = "{\"x\":${goal.x},\"y\":${goal.y}}"
             ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).syncBody(info)
         }
     }

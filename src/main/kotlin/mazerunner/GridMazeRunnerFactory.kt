@@ -12,12 +12,6 @@ import java.util.function.Supplier
 class GridMazeRunnerFactory(val maze: OrthogonalGrid,
                             val startPosition: Supplier<GridPosition>) : MazeRunnerFactory {
 
-    constructor(maze: OrthogonalGrid) : this(maze, Supplier {
-        GridPosition.values()
-                .filter { it != GridPosition.CENTER }
-                .random()
-    })
-
     override fun create(tag: Tag) = GridMazeRunner(tag, maze, nextStartPoint())
 
     private fun nextStartPoint(): Point {

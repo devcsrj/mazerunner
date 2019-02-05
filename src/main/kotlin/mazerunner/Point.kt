@@ -11,8 +11,8 @@ data class Point(val x: Int,
  * Serializes this point into: (x,y)
  */
 fun Point.writeTo(buffer: DataBuffer) = buffer.write("(${this.x},${this.y})".toByteArray())
-fun OrthogonalGrid.centerPoint() = this.pointOf(this.cell(GridPosition.CENTER))
 fun OrthogonalGrid.cellOn(point: Point) = this.cell(point.x, point.y)
 fun OrthogonalGrid.pointOf(cell: Int) = Point(this.col(cell), this.row(cell))
+fun OrthogonalGrid.pointOf(position: GridPosition) = pointOf(cell(position))
 
 
