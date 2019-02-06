@@ -17,7 +17,6 @@ import (
 var addr = flag.String("addr", "localhost:8999", "address")
 var id = flag.String("id", "ninja", "The runner id")
 var name = flag.String("name", "TOGO", "The runner name")
-var h = flag.String("heuristic", "manhattan", "Heuristics to use [fixed, random, manhattan, diagonal, euclidian]")
 var verbose = flag.Bool("verbose", false, "Whether to dump the coordinates")
 
 var numberOfMoves = 0
@@ -41,12 +40,12 @@ func main() {
 	}
 	defer conn.Close()
 
-	fmt.Printf("[%s] Solving maze with %s\n", *name, *h)
+	fmt.Printf("[%s] Solving maze with exhaustive search\n", *name)
 
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
-		solve(*conn, parseHeuristic(*h))
+		solve(*conn)
 	}()
 
 	for {
@@ -70,20 +69,21 @@ func main() {
 }
 
 // Solves the maze using a*
-func solve(conn websocket.Conn, alg heuristic) {
+func solve(conn websocket.Conn) {
 	goal := goal()
-	frontier := make(PriorityQueue, 0)
+	frontier := make([]node, 0)
 	cameFrom := make(map[point]position)
 	costSoFar := make(map[point]float64)
 
 	// Put starting node to open
 	position := whereAmI(conn)
-	frontier.Push(&node{cost: 0, point: position.point})
+	frontier = append(frontier, node{cost: 0, point: position.point})
 	costSoFar[position.point] = 0
 
-	for frontier.Len() != 0 {
+	for len(frontier) != 0 {
 
-		next := frontier.Pop().(*node)
+		next := frontier[len(frontier)-1]
+		frontier = frontier[:len(frontier)-1]
 		if next.point == goal {
 			fmt.Printf("I won, after %d moves\n", numberOfMoves)
 			break // we're done
@@ -100,12 +100,8 @@ func solve(conn websocket.Conn, alg heuristic) {
 			newCost := costSoFar[next.point] + movementCost(next.point, neighbor)
 			if currentCost, existing := costSoFar[neighbor]; !existing || newCost < currentCost {
 				costSoFar[neighbor] = newCost
-				h := alg.compute(neighbor, goal)
-				frontier.Push(&node{cost: newCost + h, point: neighbor})
-
+				frontier = append(frontier, node{cost: newCost, point: neighbor})
 				cameFrom[neighbor] = *position
-				//cameFrom[neighbor] = next.point
-				//cameFrom.PushFront(next.point)
 			}
 		}
 	}
@@ -211,21 +207,4 @@ func pointFrom(str string) point {
 	x, _ := strconv.Atoi(tokens[0])
 	y, _ := strconv.Atoi(tokens[1])
 	return point{x, y}
-}
-
-func parseHeuristic(str string) heuristic {
-	switch str {
-	case "fixed":
-		return fixed{1}
-	case "random":
-		return random{}
-	case "manhattan":
-		return manhattan{}
-	case "diagonal":
-		return diagonal{}
-	case "euclidian":
-		return euclidian{}
-	default:
-		panic("Unknown heuristics: " + str)
-	}
 }
