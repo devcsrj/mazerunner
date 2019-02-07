@@ -25,10 +25,26 @@ open class Server {
     open fun activeMaze(props: MazeProperties) = KruskalMazeGenerator(props.columns, props.rows).createMaze(0, 0)
 
     @Bean
-    open fun goal(activeMaze: OrthogonalGrid) = activeMaze.pointOf(GridPosition.BOTTOM_RIGHT)
+    open fun goal(activeMaze: OrthogonalGrid,
+                  props: MazeProperties): Supplier<Point> {
+        val topRight = activeMaze.cell(GridPosition.TOP_RIGHT)
+        val bottomRight = activeMaze.cell(GridPosition.BOTTOM_RIGHT)
+        val start = (topRight + bottomRight) / 2
+        return Supplier { activeMaze.pointOf(start) }
+    }
 
     @Bean
-    open fun mazeRunnerService(activeMaze: OrthogonalGrid) = GridMazeRunnerFactory(activeMaze, Supplier { GridPosition.TOP_LEFT })
+    open fun startPoint(activeMaze: OrthogonalGrid,
+                        props: MazeProperties): Supplier<Point> {
+        val topLeft = activeMaze.cell(GridPosition.TOP_LEFT)
+        val bottomLeft = activeMaze.cell(GridPosition.BOTTOM_LEFT)
+        val start = (topLeft + bottomLeft) / 2
+        return Supplier { activeMaze.pointOf(start) }
+    }
+
+    @Bean
+    open fun mazeRunnerService(activeMaze: OrthogonalGrid,
+                               startPoint: Supplier<Point>) = GridMazeRunnerFactory(activeMaze, startPoint)
 
     @Bean
     open fun tagFunction() = ExtractTagFromSessionHeader("x-runner-tag")
@@ -71,17 +87,17 @@ open class Server {
 
     @Bean
     open fun routes(props: MazeProperties,
-                    goal: Point) = router {
+                    goal: Supplier<Point>) = router {
         GET("/maze/info") {
             val info = "{\"columns\":${props.columns},\"rows\":${props.rows}}"
             ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).syncBody(info)
         }
         GET("/maze/goal") {
-            val info = "{\"x\":${goal.x},\"y\":${goal.y}}"
+            val (x, y) = goal.get()
+            val info = "{\"x\":$x,\"y\":$y}"
             ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).syncBody(info)
         }
     }
-
 }
 
 fun main(args: Array<String>) {

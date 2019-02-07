@@ -35,7 +35,7 @@ class ServerTest {
 
         @Bean
         open fun mazeRunnerService(activeMaze: OrthogonalGrid) =
-                GridMazeRunnerFactory(activeMaze, Supplier { GridPosition.TOP_LEFT })
+                GridMazeRunnerFactory(activeMaze, Supplier{ Point(0, 0)})
     }
 
     @LocalServerPort
