@@ -74,7 +74,7 @@
 				layer.add(vm.shape);
 				layer.draw();
 			};
-			imageObj.src = '/dungeon-tile.png';
+			imageObj.src = '/tile.png';
 		}
 
 		toString() {
@@ -93,18 +93,29 @@
 
 			const vm = this;
 			const imageObj = new Image();
+			imageObj.src = '/goal.png';
 			imageObj.onload = function () {
-				vm.marker = new Konva.Image({
+				vm.marker = new Konva.Sprite({
 					image: imageObj,
-					x: dimension.width * point.x,
-					y: dimension.height * point.y,
-					height: dimension.height,
-					width: dimension.width
+					animation: 'idle',
+					animations: {
+						idle: [
+							// x, y, width, height
+							44, 100, 47, 62,
+							94, 100, 48, 62,
+						],
+					},
+					frameRate: 2,
+					frameIndex: 0,
+					height: 62,
+					width: 49,
+					x: dimension.width * point.x - 30,
+					y: dimension.height * point.y - 15,
 				});
 				layer.add(vm.marker);
 				layer.draw();
+				vm.marker.start();
 			};
-			imageObj.src = '/alchemy-circle.png';
 		}
 	}
 
@@ -125,7 +136,9 @@
 
 			const vm = this;
 			const image = new Image();
-			image.src = '/character1.png';
+			const variations = 28;
+			const num = Math.floor((Math.random() * variations) + 1);
+			image.src = '/characters/CHAR' + num + ".png";
 			image.onload = new function () {
 				vm.avatar = new Konva.Sprite({
 					image: image,
@@ -133,52 +146,51 @@
 					animations: {
 						idle: [
 							// x, y, width, height
-							79, 187, 32, 32,
+							59, 186, 34, 34,
 						],
 						runLeft: [
-							46, 229, 32, 32,
-							79, 229, 32, 32,
-							112, 229, 32, 32,
+							21, 228, 34, 34,
+							59, 228, 34, 34,
+							97, 228, 34, 34,
 						],
 						runRight: [
-							46, 145, 32, 32,
-							79, 145, 32, 32,
-							112, 145, 32, 32,
+							21, 144, 34, 34,
+							59, 144, 34, 34,
+							97, 144, 34, 34,
 						],
 						runUp: [
-							46, 103, 32, 32,
-							79, 103, 32, 32,
-							112, 103, 32, 32
+							21, 102, 34, 34,
+							59, 102, 34, 34,
+							97, 102, 34, 34,
 						],
 						runDown: [
-							46, 187, 32, 32,
-							79, 187, 32, 32,
-							112, 187, 32, 32,
+							21, 186, 34, 34,
+							59, 186, 34, 34,
+							97, 186, 34, 34,
 						],
 						teleport: [
-							46, 271, 32, 32,
-							79, 271, 32, 32,
-							112, 271, 32, 32,
-							145, 271, 32, 32,
-							178, 271, 32, 32,
-							211, 271, 32, 32,
-							244, 271, 32, 32,
-							277, 271, 32, 32,
-							310, 271, 32, 32,
-							343, 271, 32, 32,
-							376, 271, 32, 32,
+							21, 270, 34, 34,
+							59, 270, 34, 34,
+							97, 270, 34, 34,
+							135, 270, 34, 34,
+							173, 270, 34, 34,
+							211, 270, 34, 34,
+							249, 270, 34, 34,
+							287, 270, 34, 34,
+							325, 270, 34, 34,
+							363, 270, 34, 34,
 						],
 						dying: [
-							46, 313, 32, 32,
-							79, 313, 32, 32,
-							112, 313, 32, 32,
-							145, 313, 32, 32,
+							21, 354, 34, 34,
+							59, 354, 34, 34,
+							97, 354, 34, 34,
+							135, 354, 34, 34,
 						]
 					},
-					frameRate: 20,
+					frameRate: 10,
 					frameIndex: 0,
-					height: 137,
-					width: 53
+					height: 34,
+					width: 34
 				});
 				layer.add(vm.avatar);
 				vm.avatar.start();
@@ -202,8 +214,8 @@
 				return new Promise((resolve, reject) => {
 					const anim = new Konva.Animation(function (frame) {
 						const center = (function () {
-							const cx = Math.round(roomSize.width - vm.avatar.width());
-							const cy = Math.round(roomSize.height - vm.avatar.height());
+							const cx = Math.abs(Math.round(roomSize.width - vm.avatar.width()));
+							const cy = Math.abs(Math.round(roomSize.height - vm.avatar.height()));
 							return {
 								x: room.shape.x() + (cx / 2),
 								y: room.shape.y() + (cy / 2)
