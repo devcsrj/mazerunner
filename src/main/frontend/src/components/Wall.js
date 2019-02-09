@@ -12,12 +12,25 @@ export default class Wall {
 	];
 
 	/**
+	 * @type {Konva.Layer}
+	 */
+	_layer;
+
+	/**
+	 * @type {Point}
+	 */
+	_origin;
+
+	/**
 	 *
 	 * @param {Dimension} dimension
 	 * @param {Point} origin the point from where this should be drawn
 	 * @param {Konva.Layer} layer
 	 */
 	constructor(dimension, origin, layer) {
+		this._layer = layer;
+		this._origin = origin;
+
 		const w = dimension.width;
 		const h = dimension.height / 2;
 		const top = new Image();

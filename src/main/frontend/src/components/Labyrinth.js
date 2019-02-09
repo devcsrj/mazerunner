@@ -5,6 +5,7 @@ import Room from "./Room";
 import Runner from "./Runner";
 import Goal from "./Goal";
 import Wall from "./Wall";
+import Banner from "./Banner";
 
 export default class Labyrinth {
 
@@ -55,10 +56,21 @@ export default class Labyrinth {
 		);
 
 		// Build walls
+		const walls = [];
 		const wallSize = new Dimension(tileSize.height * 2, tileSize.width);
 		for (let row = 0; row < this._rows; row++) {
 			const origin = new Point(wallSize.width * row, 0);
 			const wall = new Wall(wallSize, origin, this._layers.terrain);
+			walls.push(wall);
+		}
+
+		// Build decorations
+		for (let i = 0; i < walls.length; i++) {
+			if (i % 8 === 0) {
+				const bannerSize = new Dimension(wallSize.height, wallSize.width + 15);
+				const origin = new Point(bannerSize.width * i, 0);
+				const banner = new Banner(bannerSize, origin, this._layers.terrain);
+			}
 		}
 
 		// Build Rooms
