@@ -15,6 +15,7 @@ import org.springframework.web.reactive.socket.server.support.WebSocketHandlerAd
 import reactor.core.publisher.DirectProcessor
 import reactor.core.publisher.TopicProcessor
 import reactor.util.concurrent.Queues
+import java.time.Duration
 import java.util.function.Function
 import java.util.function.Supplier
 
@@ -45,13 +46,17 @@ open class Server {
 
     @Bean
     open fun mazeRunnerService(activeMaze: OrthogonalGrid,
-                               startPoint: Supplier<Point>) = GridMazeRunnerFactory(activeMaze, startPoint)
+                               startPoint: Supplier<Point>,
+                               props: RunnerProperties): MazeRunnerFactory {
+        val lifespan = Duration.ofMillis(props.lifespan)
+        return GridMazeRunnerFactory(activeMaze, startPoint, lifespan)
+    }
 
     @Bean
     open fun tagFunction() = ExtractTagFromSessionHeader("x-runner-tag")
 
     @Bean
-    open fun positionTopicProcessor(): TopicProcessor<MazeMovementEvent>  {
+    open fun positionTopicProcessor(): TopicProcessor<MazeMovementEvent> {
         val topic = TopicProcessor
                 .builder<MazeMovementEvent>()
                 .bufferSize(Queues.SMALL_BUFFER_SIZE)

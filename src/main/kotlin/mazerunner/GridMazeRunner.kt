@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory
  */
 class GridMazeRunner(private val tag: Tag,
                      private val grid: OrthogonalGrid,
-                     start: Point) : MazeRunner, ObservableGraphTraversal() {
+                     private val start: Point) : MazeRunner, ObservableGraphTraversal() {
 
     private val logger = LoggerFactory.getLogger(GridMazeRunner::class.java)
     private val nowhere = Point(-1, -1)
