@@ -29,19 +29,23 @@ open class Server {
     @Bean
     open fun goal(activeMaze: OrthogonalGrid,
                   props: MazeProperties): Supplier<Point> {
-        val topRight = activeMaze.cell(GridPosition.TOP_RIGHT) - 1
-        val bottomRight = activeMaze.cell(GridPosition.BOTTOM_RIGHT) - 1
-        val start = (topRight + bottomRight) / 2
-        return Supplier { activeMaze.pointOf(start) }
+        val topRight = activeMaze.pointOf(GridPosition.TOP_RIGHT)
+        val bottomRight = activeMaze.pointOf(GridPosition.BOTTOM_RIGHT)
+        val start = Point(
+                ((topRight.x + bottomRight.x) / 2) - 1,
+                (topRight.y + bottomRight.y) / 2)
+        return Supplier { start }
     }
 
     @Bean
     open fun startPoint(activeMaze: OrthogonalGrid,
                         props: MazeProperties): Supplier<Point> {
-        val topLeft = activeMaze.cell(GridPosition.TOP_LEFT)
-        val bottomLeft = activeMaze.cell(GridPosition.BOTTOM_LEFT)
-        val start = (topLeft + bottomLeft) / 2
-        return Supplier { activeMaze.pointOf(start) }
+        val topLeft = activeMaze.pointOf(GridPosition.TOP_LEFT)
+        val bottomLeft = activeMaze.pointOf(GridPosition.BOTTOM_LEFT)
+        val start = Point(
+                (topLeft.x + bottomLeft.x) / 2,
+                (topLeft.y + bottomLeft.y) / 2)
+        return Supplier { start }
     }
 
     @Bean
