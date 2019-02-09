@@ -12,6 +12,7 @@ import org.springframework.web.reactive.handler.SimpleUrlHandlerMapping
 import org.springframework.web.reactive.socket.WebSocketHandler
 import org.springframework.web.reactive.socket.WebSocketSession
 import org.springframework.web.reactive.socket.server.support.WebSocketHandlerAdapter
+import reactor.core.publisher.DirectProcessor
 import reactor.core.publisher.TopicProcessor
 import reactor.util.concurrent.Queues
 import java.util.function.Function
@@ -27,8 +28,8 @@ open class Server {
     @Bean
     open fun goal(activeMaze: OrthogonalGrid,
                   props: MazeProperties): Supplier<Point> {
-        val topRight = activeMaze.cell(GridPosition.TOP_RIGHT)
-        val bottomRight = activeMaze.cell(GridPosition.BOTTOM_RIGHT)
+        val topRight = activeMaze.cell(GridPosition.TOP_RIGHT) - 1
+        val bottomRight = activeMaze.cell(GridPosition.BOTTOM_RIGHT) - 1
         val start = (topRight + bottomRight) / 2
         return Supplier { activeMaze.pointOf(start) }
     }
@@ -50,12 +51,21 @@ open class Server {
     open fun tagFunction() = ExtractTagFromSessionHeader("x-runner-tag")
 
     @Bean
-    open fun positionTopicProcessor(): TopicProcessor<MazeMovementEvent> = TopicProcessor
-            .builder<MazeMovementEvent>()
-            .bufferSize(Queues.SMALL_BUFFER_SIZE)
-            .share(true)
-            .autoCancel(true)
-            .build()
+    open fun positionTopicProcessor(): TopicProcessor<MazeMovementEvent>  {
+        val topic = TopicProcessor
+                .builder<MazeMovementEvent>()
+                .bufferSize(Queues.SMALL_BUFFER_SIZE)
+                .share(true)
+                .autoCancel(true)
+                .build()
+
+        // There must be at least one consumer for the topic to continue publishing
+        val blindConsumer = DirectProcessor.create<MazeMovementEvent>()
+        topic.subscribeWith(blindConsumer)
+        blindConsumer.subscribe()
+
+        return topic
+    }
 
     @Bean
     open fun mazeMovementWebSocketHandler(mazeRunnerFactory: MazeRunnerFactory,
