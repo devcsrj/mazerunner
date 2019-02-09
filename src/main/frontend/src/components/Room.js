@@ -1,6 +1,5 @@
 import Point from "./Point";
 import * as Konva from "konva";
-import Dimension from "./Dimension";
 
 /**
  * A room based from Konva.
@@ -9,7 +8,11 @@ import Dimension from "./Dimension";
  */
 export default class Room {
 
-	_imgUrl = '/tile.png';
+	_imageUrls = [
+		'/floors/obsidian-floor-plain.png',
+		'/floors/obsidian-floor-vent.png',
+		'/floors/obsidian-floor-vines.png'
+	];
 	/**
 	 * @type {Point}
 	 */
@@ -60,7 +63,19 @@ export default class Room {
 			vm._shape = new Konva.Image(config);
 			vm._layer.add(vm._shape);
 		};
-		img.src = vm._imgUrl
+		img.src = vm._imageUrl()
+	}
+
+	/**
+	 * @return {string} the image url to use
+	 */
+	_imageUrl() {
+		const variations = this._imageUrls.length + 5;
+		let num = Math.floor((Math.random() * variations) + 1);
+		if (num > this._imageUrls.length - 1) {
+			num = 0; // prioritize the "plain"
+		}
+		return this._imageUrls[num];
 	}
 
 	/**

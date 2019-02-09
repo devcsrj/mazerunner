@@ -47,8 +47,8 @@ export default class Goal {
 		};
 		img.onload = new function () {
 			vm._shape = new Konva.Sprite(config);
-			vm._shape.start();
 			vm._layer.add(vm._shape);
+			vm._shape.start();
 		};
 		img.src = vm._imgUrl
 	}

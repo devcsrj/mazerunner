@@ -63,11 +63,17 @@ export default class Labyrinth {
 			this._rooms.push(hall);
 		}
 
-		this._rooms[goal.y][goal.x].put(new Goal(this._layers.runners));
+		this._rooms[goal.y][goal.x].put(new Goal(this._layers.rooms));
 
 		stage.add(this._layers.rooms);
 		stage.add(this._layers.runners);
 		stage.batchDraw();
+
+		const vm = this;
+		setTimeout(function () {
+			// For some reason, rooms aren't drawn right away :(
+			vm._layers.rooms.draw();
+		}, 1000);
 	}
 
 	/**
