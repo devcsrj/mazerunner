@@ -16,10 +16,6 @@ export default class Room {
 	/**
 	 * @type {Point}
 	 */
-	_point;
-	/**
-	 * @type {Point}
-	 */
 	_origin;
 	/**
 	 * @type {Dimension}
@@ -29,31 +25,22 @@ export default class Room {
 	 * @type {Konva.Image}
 	 */
 	_shape;
-	/**
-	 * @type {Konva.Layer}
-	 */
-	_layer;
 
 	/**
 	 *
 	 * @param {Dimension} dimension dimensions of the room
-	 * @param {Point} point the location of this room
+	 * @param {Point} origin the point at which this should be drawn
 	 * @param {Konva.Layer} layer
 	 */
-	constructor(dimension, point, layer) {
+	constructor(dimension, origin, layer) {
 		this._size = dimension;
-		this._point = point;
-		this._origin = new Point(
-			dimension.width * point.x,
-			dimension.height * point.y
-		);
-		this._layer = layer;
+		this._origin = origin;
 
 		const img = new Image();
 		const config = {
 			drawBorder: true,
-			x: this._origin.x,
-			y: this._origin.y,
+			x: origin.x,
+			y: origin.y,
 			height: dimension.height,
 			width: dimension.width,
 			image: img
@@ -61,7 +48,7 @@ export default class Room {
 		const vm = this;
 		img.onload = new function () {
 			vm._shape = new Konva.Image(config);
-			vm._layer.add(vm._shape);
+			layer.add(vm._shape);
 		};
 		img.src = vm._imageUrl()
 	}
@@ -105,9 +92,5 @@ export default class Room {
 	put(goal) {
 		const point = this.center(goal.size());
 		goal.position(point);
-	}
-
-	toString() {
-		return "Room(" + this._point + ")";
 	}
 }
