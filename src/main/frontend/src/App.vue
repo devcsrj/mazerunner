@@ -10,7 +10,7 @@
 	export default {
 		name: 'app',
 		components: {
-			Maze,
+			Maze: Maze,
 		}
 	}
 </script>
