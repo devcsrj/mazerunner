@@ -57,9 +57,9 @@ export default class Labyrinth {
 
 		// Build walls
 		const walls = [];
-		const wallSize = new Dimension(tileSize.height * 2, tileSize.width);
-		for (let row = 0; row < this._rows; row++) {
-			const origin = new Point(wallSize.width * row, 0);
+		const wallSize = new Dimension(stage.height() * (1 / 10), tileSize.width);
+		for (let column = 0; column < this._columns; column++) {
+			const origin = new Point(wallSize.width * column, 0);
 			const wall = new Wall(wallSize, origin, this._layers.terrain);
 			walls.push(wall);
 		}

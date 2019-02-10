@@ -93,8 +93,8 @@ export default class Runner {
 		};
 		img.onload = function () {
 			vm._shape = new Konva.Sprite(config);
-			vm._shape.start();
 			vm._layer.add(vm._shape);
+			vm._shape.start();
 		};
 		img.src = this._imageUrl();
 	}
