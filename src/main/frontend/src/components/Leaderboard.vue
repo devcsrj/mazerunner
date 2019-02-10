@@ -1,7 +1,7 @@
 <template>
   <div class="container">
     <ul>
-      <img src="//placehold.it/32x32"/>
+      <img src="/icon-goal.png"/>
       <li v-for="score in scores"><span>{{score.tag.name}}</span> <span>{{score.moves}}</span></li>
     </ul>
   </div>
@@ -39,6 +39,10 @@
     bottom: 0;
     left: 0;
     z-index: 1000000000;
+  }
+
+  ul > img {
+    background-color: #595B5B;
   }
 
   li {

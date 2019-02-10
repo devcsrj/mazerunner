@@ -8,7 +8,7 @@ import * as Konva from "konva";
 
 export default class Goal {
 
-	_imgUrl = '/goal.png';
+	_imgUrl = '/sprite-goal.png';
 	/**
 	 * @type {Dimension}
 	 */
