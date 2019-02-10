@@ -41,11 +41,7 @@ open class Server {
     open fun startPoint(activeMaze: OrthogonalGrid,
                         props: MazeProperties): Supplier<Point> {
         val topLeft = activeMaze.pointOf(GridPosition.TOP_LEFT)
-        val bottomLeft = activeMaze.pointOf(GridPosition.BOTTOM_LEFT)
-        val start = Point(
-                (topLeft.x + bottomLeft.x) / 2,
-                (topLeft.y + bottomLeft.y) / 2)
-        return Supplier { start }
+        return Supplier { topLeft }
     }
 
     @Bean
