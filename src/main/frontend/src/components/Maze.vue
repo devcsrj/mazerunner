@@ -21,7 +21,7 @@
 		reconnect: true
 	});
 
-	const windowPad = 4;
+	const windowPad = 0;
 	const width = window.innerWidth;
 	const height = window.innerHeight;
 
