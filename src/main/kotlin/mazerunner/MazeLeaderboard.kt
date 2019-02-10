@@ -25,4 +25,5 @@ class MazeLeaderboard(eventPublisher: TopicProcessor<MazeMovementEvent>,
     override fun scores(): Flux<Entry> = scores.values
             .sortedBy { it.moves }
             .toFlux()
+            .take(20L)
 }
