@@ -27,4 +27,9 @@ class EphemeralMazeRunner(private val delegate: MazeRunner,
         return delegate.move(destination)
     }
 
+    override fun jump() = delegate.jump()
+
+    override fun steps() = delegate.steps()
+
+    override fun toString() = "Ephemeral[$delegate]"
 }

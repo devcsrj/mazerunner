@@ -4,6 +4,7 @@ import de.amr.easy.graph.api.traversal.TraversalState
 import de.amr.easy.graph.impl.traversal.ObservableGraphTraversal
 import de.amr.easy.grid.impl.OrthogonalGrid
 import org.slf4j.LoggerFactory
+import java.util.concurrent.atomic.LongAdder
 
 /**
  * An implementation of [MazeRunner] that operates on an [OrthogonalGrid]
@@ -14,6 +15,7 @@ class GridMazeRunner(private val tag: Tag,
 
     private val logger = LoggerFactory.getLogger(GridMazeRunner::class.java)
     private val nowhere = Point(-1, -1)
+    private val steps = LongAdder()
     private var currentCell: Int? = null
 
     init {
@@ -37,8 +39,15 @@ class GridMazeRunner(private val tag: Tag,
         if (destination == nowhere)
             return currentPosition()
         goTo(destination)
+        steps.increment()
         return currentPosition()
     }
+
+    override fun jump() = currentPosition()
+
+    override fun steps() = steps.sum()
+
+    override fun toString() = "Runner[$tag]"
 
     private fun goTo(point: Point) {
         val srcCell = currentCell!!

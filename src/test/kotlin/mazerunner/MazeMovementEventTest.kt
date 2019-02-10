@@ -14,7 +14,8 @@ class MazeMovementEventTest {
                         Point(1, 0),
                         Point(0, 1)))
         val tag = Tag("devcsrj", "RJ")
-        val event = MazeMovementEvent(tag, MazeMovementEvent.Type.MOVED, "OK", position)
+        val runner = FlyingMazeRunner(tag, position)
+        val event = MazeMovementEvent(runner, MazeMovementEvent.Type.MOVED, "OK")
 
         val factory = DefaultDataBufferFactory()
         val buffer = factory.allocateBuffer()

@@ -2,17 +2,13 @@ package mazerunner
 
 import org.springframework.core.io.buffer.DataBuffer
 
-data class MazeMovementEvent(val tag: Tag,
+data class MazeMovementEvent(val runner: MazeRunner,
                              val type: Type,
-                             val message: String,
-                             val position: Position?) {
-
-    constructor(tag: Tag, type: Type, message: String) : this(tag, type, message, null)
+                             val message: String) {
 
     enum class Type {
         MOVED,
-        FAILED,
-        FINISHED
+        FAILED
     }
 
 }
@@ -28,13 +24,13 @@ fun MazeMovementEvent.writeTo(buffer: DataBuffer) {
     buffer.write(this.type.name.toByteArray())
     buffer.write(']'.toByte())
 
-    buffer.write("id=${this.tag.id};".toByteArray())
-    buffer.write("name=${this.tag.name};".toByteArray())
+    buffer.write("id=${this.runner.tag().id};".toByteArray())
+    buffer.write("name=${this.runner.tag().name};".toByteArray())
 
-    if (this.position != null) {
-        buffer.write("position=".toByteArray())
-        position.writeTo(buffer)
-        buffer.write(';'.toByte())
-    }
+    val position = this.runner.jump()
+    buffer.write("position=".toByteArray())
+    position.writeTo(buffer)
+    buffer.write(';'.toByte())
+
     buffer.write("message=${this.message}".toByteArray())
 }

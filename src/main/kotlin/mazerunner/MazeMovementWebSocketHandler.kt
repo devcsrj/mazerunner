@@ -1,6 +1,7 @@
 package mazerunner
 
 import org.reactivestreams.Publisher
+import org.slf4j.LoggerFactory
 import org.springframework.core.io.buffer.DefaultDataBufferFactory
 import org.springframework.web.reactive.socket.CloseStatus
 import org.springframework.web.reactive.socket.WebSocketHandler
@@ -36,6 +37,8 @@ class MazeMovementWebSocketHandler(
         private val tagFunction: Function<WebSocketSession, Tag?>,
         private val eventPublisher: TopicProcessor<MazeMovementEvent>) : WebSocketHandler {
 
+    private val logger = LoggerFactory.getLogger(MazeMovementWebSocketHandler::class.java)
+
     constructor(factory: MazeRunnerFactory, tagFunction: Function<WebSocketSession, Tag?>)
             : this(factory, tagFunction, TopicProcessor.builder<MazeMovementEvent>()
             .bufferSize(Queues.SMALL_BUFFER_SIZE)
@@ -54,7 +57,7 @@ class MazeMovementWebSocketHandler(
                 .map { payload -> extractPoint(payload) }
                 .map { point -> runner.move(point) }
                 .doOnNext {
-                    val e = MazeMovementEvent(tag, MazeMovementEvent.Type.MOVED, "OK", it)
+                    val e = MazeMovementEvent(runner, MazeMovementEvent.Type.MOVED, "OK")
                     eventPublisher.onNext(e)
                 }
                 .map { position ->
@@ -63,8 +66,10 @@ class MazeMovementWebSocketHandler(
                     WebSocketMessage(WebSocketMessage.Type.TEXT, buffer)
                 }
                 .doOnError {
-                    val e = MazeMovementEvent(tag, MazeMovementEvent.Type.FAILED, it.message!!)
+                    val e = MazeMovementEvent(runner, MazeMovementEvent.Type.FAILED, it.message!!)
                     eventPublisher.onNext(e)
+                }.doOnTerminate {
+                    logger.info("Runner '$runner' rested")
                 }
         )
     }

@@ -18,4 +18,14 @@ interface MazeRunner {
      * @return the resulting position
      */
     fun move(destination: Point): Position
+
+    /**
+     * @return the current position
+     */
+    fun jump(): Position
+
+    /**
+     * @return the number of steps made by this runner
+     */
+    fun steps(): Long
 }

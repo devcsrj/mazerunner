@@ -5,6 +5,7 @@ import de.amr.easy.grid.impl.OrthogonalGrid
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.context.annotation.Bean
+import org.springframework.core.ParameterizedTypeReference
 import org.springframework.http.MediaType
 import org.springframework.web.reactive.function.server.ServerResponse
 import org.springframework.web.reactive.function.server.router
@@ -12,7 +13,6 @@ import org.springframework.web.reactive.handler.SimpleUrlHandlerMapping
 import org.springframework.web.reactive.socket.WebSocketHandler
 import org.springframework.web.reactive.socket.WebSocketSession
 import org.springframework.web.reactive.socket.server.support.WebSocketHandlerAdapter
-import reactor.core.publisher.DirectProcessor
 import reactor.core.publisher.TopicProcessor
 import reactor.util.concurrent.Queues
 import java.time.Duration
@@ -27,8 +27,8 @@ open class Server {
     open fun activeMaze(props: MazeProperties) = KruskalMazeGenerator(props.columns, props.rows).createMaze(0, 0)
 
     @Bean
-    open fun goal(activeMaze: OrthogonalGrid,
-                  props: MazeProperties): Supplier<Point> {
+    open fun goalPoint(activeMaze: OrthogonalGrid,
+                       props: MazeProperties): Supplier<Point> {
         val topRight = activeMaze.pointOf(GridPosition.TOP_RIGHT)
         val bottomRight = activeMaze.pointOf(GridPosition.BOTTOM_RIGHT)
         val start = Point(
@@ -61,19 +61,18 @@ open class Server {
 
     @Bean
     open fun positionTopicProcessor(): TopicProcessor<MazeMovementEvent> {
-        val topic = TopicProcessor
+        return TopicProcessor
                 .builder<MazeMovementEvent>()
                 .bufferSize(Queues.SMALL_BUFFER_SIZE)
                 .share(true)
                 .autoCancel(true)
                 .build()
+    }
 
-        // There must be at least one consumer for the topic to continue publishing
-        val blindConsumer = DirectProcessor.create<MazeMovementEvent>()
-        topic.subscribeWith(blindConsumer)
-        blindConsumer.subscribe()
-
-        return topic
+    @Bean
+    open fun leaderboard(positionTopicProcessor: TopicProcessor<MazeMovementEvent>,
+                         goalPoint: Supplier<Point>): Leaderboard {
+        return MazeLeaderboard(positionTopicProcessor, goalPoint.get())
     }
 
     @Bean
@@ -106,15 +105,19 @@ open class Server {
 
     @Bean
     open fun routes(props: MazeProperties,
-                    goal: Supplier<Point>) = router {
+                    leaderboard: Leaderboard,
+                    goalPoint: Supplier<Point>) = router {
         GET("/maze/info") {
             val info = "{\"columns\":${props.columns},\"rows\":${props.rows}}"
             ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).syncBody(info)
         }
         GET("/maze/goal") {
-            val (x, y) = goal.get()
+            val (x, y) = goalPoint.get()
             val info = "{\"x\":$x,\"y\":$y}"
             ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).syncBody(info)
+        }
+        GET("/maze/scores"){
+            ServerResponse.ok().body(leaderboard.scores(), Leaderboard.Entry::class.java)
         }
     }
 }
