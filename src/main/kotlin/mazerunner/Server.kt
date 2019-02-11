@@ -10,11 +10,13 @@ import org.springframework.http.MediaType
 import org.springframework.web.reactive.function.server.ServerResponse
 import org.springframework.web.reactive.function.server.router
 import org.springframework.web.reactive.handler.SimpleUrlHandlerMapping
+import org.springframework.web.reactive.result.view.UrlBasedViewResolver
 import org.springframework.web.reactive.socket.WebSocketHandler
 import org.springframework.web.reactive.socket.WebSocketSession
 import org.springframework.web.reactive.socket.server.support.WebSocketHandlerAdapter
 import reactor.core.publisher.TopicProcessor
 import reactor.util.concurrent.Queues
+import java.net.URI
 import java.time.Duration
 import java.util.function.Function
 import java.util.function.Supplier
@@ -114,6 +116,9 @@ open class Server {
         }
         GET("/maze/scores"){
             ServerResponse.ok().body(leaderboard.scores(), Leaderboard.Entry::class.java)
+        }
+        GET("/"){
+            ServerResponse.temporaryRedirect(URI.create("/index.html")).build()
         }
     }
 }
