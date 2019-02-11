@@ -11,7 +11,7 @@
 
     <groupId>devcsrj</groupId>
     <artifactId>mazerunner</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
 
     <name>mazerunner.Server</name>
     <description>A websocket-based maze running competition</description>
