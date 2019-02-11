@@ -88,6 +88,8 @@ export default class Runner {
 			},
 			frameRate: 10,
 			frameIndex: 0,
+			x: -99,
+			y: -99,
 			height: 34,
 			width: 34
 		};
