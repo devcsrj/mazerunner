@@ -1,21 +1,23 @@
 package mazerunner
 
+import com.vladsch.flexmark.html.HtmlRenderer
+import com.vladsch.flexmark.parser.Parser
+import com.vladsch.flexmark.util.options.MutableDataSet
 import de.amr.easy.grid.api.GridPosition
 import de.amr.easy.grid.impl.OrthogonalGrid
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.context.annotation.Bean
-import org.springframework.core.ParameterizedTypeReference
 import org.springframework.http.MediaType
 import org.springframework.web.reactive.function.server.ServerResponse
 import org.springframework.web.reactive.function.server.router
 import org.springframework.web.reactive.handler.SimpleUrlHandlerMapping
-import org.springframework.web.reactive.result.view.UrlBasedViewResolver
 import org.springframework.web.reactive.socket.WebSocketHandler
 import org.springframework.web.reactive.socket.WebSocketSession
 import org.springframework.web.reactive.socket.server.support.WebSocketHandlerAdapter
 import reactor.core.publisher.TopicProcessor
 import reactor.util.concurrent.Queues
+import java.io.InputStreamReader
 import java.net.URI
 import java.time.Duration
 import java.util.function.Function
@@ -114,11 +116,26 @@ open class Server {
             val info = "{\"x\":$x,\"y\":$y}"
             ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).syncBody(info)
         }
-        GET("/maze/scores"){
+        GET("/maze/scores") {
             ServerResponse.ok().body(leaderboard.scores(), Leaderboard.Entry::class.java)
         }
-        GET("/"){
+        GET("/maze") {
             ServerResponse.temporaryRedirect(URI.create("/index.html")).build()
+        }
+        GET("/") { request ->
+            val options = MutableDataSet()
+            options.set(HtmlRenderer.SOFT_BREAK, "<br />\n")
+
+            val parser = Parser.builder(options).build()
+            val renderer = HtmlRenderer.builder(options).build()
+
+            val resource = javaClass.getResourceAsStream("/scripture.md")
+            val document = InputStreamReader(resource).use {
+                parser.parseReader(it)
+            }
+            ServerResponse.ok()
+                    .header("Content-Type", "text/html")
+                    .syncBody(renderer.render(document))
         }
     }
 }
