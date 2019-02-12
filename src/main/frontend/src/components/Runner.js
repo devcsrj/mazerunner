@@ -6,7 +6,7 @@ import * as Konva from "konva";
 
 export default class Runner {
 
-	_velocity = 1000;
+	_velocity = 70;
 	_dimension = new Dimension(34, 34);
 	_variations = 28;
 	/**
@@ -18,6 +18,11 @@ export default class Runner {
 	 * to animate the sprite
 	 */
 	_animations;
+
+	/**
+	 * @type {number} the number of queued animation
+	 */
+	_animationQueueSize = 0;
 
 	/**
 	 * @type {Konva.Layer}
@@ -120,6 +125,7 @@ export default class Runner {
 
 		const dest = room.center(this._dimension);
 		const vm = this;
+		vm._animationQueueSize++;
 		vm._animations = vm._animations.then(function () {
 			return new Promise((resolve) => {
 				const anim = new Konva.Animation(function (frame) {
@@ -127,7 +133,8 @@ export default class Runner {
 					const dy = dest.y - vm._shape.y();
 
 					let tooFast = false;
-					let dist = vm._velocity * (frame.time / 1000);
+					let speed = vm._velocity + (vm._velocity * vm._animationQueueSize);
+					let dist = Math.max(vm._velocity, speed) * (frame.time / 1000);
 					if (dx > room.size().width * 2 || dy > room.size().height * 2) {
 						dist *= 50; // faster
 						tooFast = true;
@@ -152,6 +159,7 @@ export default class Runner {
 						}
 					}
 
+					vm._animationQueueSize--;
 					vm._shape.move({
 						x: mx,
 						y: my
