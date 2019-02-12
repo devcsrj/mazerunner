@@ -180,7 +180,7 @@ export default class Runner {
 			return new Promise((resolve) => {
 				vm._shape.animation('dying');
 				setTimeout(function () {
-					vm._layer.removeChildren(vm._shape);
+					vm._shape.destroy();
 					resolve(vm);
 				}, 400); // FIXME compute timeout
 			});
