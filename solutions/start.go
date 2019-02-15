@@ -16,7 +16,8 @@ import (
 var addr = flag.String("addr", "localhost:8999", "address")
 var id = flag.String("id", "ninja", "The runner id")
 var name = flag.String("name", "TOGO", "The runner name")
-var alg = flag.String("alg", "dijkstra", "The algorithm to use ['dijkstra', 'headless', 'a*man', 'a*diag', 'a*euc']")
+var alg = flag.String("alg", "headless",
+	"The algorithm to use ['dijkstra', 'headless', 'a*man', 'a*diag', 'a*euc', 'pledge']")
 var verbose = flag.Bool("verbose", true, "Verbose")
 
 var solutions = map[string]reflect.Type{
@@ -25,6 +26,7 @@ var solutions = map[string]reflect.Type{
 	"a*man":    reflect.TypeOf(AStarManhattan{}),
 	"a*diag":   reflect.TypeOf(AStarDiagonal{}),
 	"a*euc":    reflect.TypeOf(AStarEuclid{}),
+	"pledge":   reflect.TypeOf(Pledge{}),
 }
 
 func main() {
@@ -33,7 +35,7 @@ func main() {
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, os.Kill)
 
-	u := url.URL{Scheme: "ws", Host: *addr, Path: "/maze/move"}
+	u := url.URL{Scheme: "wss", Host: *addr, Path: "/maze/move"}
 	log.Printf("connecting to %s", u.String())
 
 	conn, _, err := websocket.DefaultDialer.Dial(u.String(), http.Header{

@@ -116,3 +116,82 @@ func (s AStarEuclid) solve(r Runner, goal Point) {
 	a := AStar{}
 	a.solveWith(euclidian{}, r, goal)
 }
+
+var (
+	NORTH = 1
+	EAST  = 2
+	SOUTH = 3
+	WEST  = 4
+) // Value is important
+
+type Pledge struct{}
+
+func (s Pledge) solve(r Runner, goal Point) {
+
+	prev := r.jump()
+	current := prev
+	for current.point != goal {
+		directions := s.relativeDirection(prev.point, current)
+
+		dir := WEST // Always take left
+		var next *Point
+		for next == nil {
+			next = directions[dir]
+			dir = s.rotate(dir, 1)
+		}
+		prev = current
+		current = r.moveTo(*next)
+	}
+}
+
+func (s Pledge) relativeDirection(prev Point, position Position) map[int]*Point {
+	absolute := s.absoluteDirection(position)
+	if prev == position.point {
+		return absolute
+	}
+
+	relative := make(map[int]*Point)
+	rotation := 0
+	for key, value := range absolute {
+		if *value == prev {
+			rotation = key + 4 - SOUTH
+			break
+		}
+	}
+	relative[SOUTH] = absolute[s.rotate(SOUTH, rotation)]
+	relative[EAST] = absolute[s.rotate(EAST, rotation)]
+	relative[NORTH] = absolute[s.rotate(NORTH, rotation)]
+	relative[WEST] = absolute[s.rotate(WEST, rotation)]
+	return relative
+}
+
+// Rotates the provided direction according to the order: NWSE
+func (s Pledge) rotate(direction int, rotation int) int {
+	i := direction + rotation
+	for i > 4 {
+		i -= 4
+	}
+	return i
+}
+
+// A map of the absoluteDirection and associated point
+func (s Pledge) absoluteDirection(position Position) map[int]*Point {
+	dir := make(map[int]*Point)
+	here := position.point
+	for _, neighbor := range position.neighbors {
+		pt := neighbor
+		if neighbor.x-here.x > 0 {
+			dir[EAST] = &pt
+		}
+		if neighbor.x-here.x < 0 {
+			dir[WEST] = &pt
+		}
+		if neighbor.y-here.y > 0 {
+			dir[SOUTH] = &pt
+		}
+		if neighbor.y-here.y < 0 {
+			dir[NORTH] = &pt
+		}
+	}
+	return dir
+}
