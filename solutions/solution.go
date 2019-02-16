@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/golang-collections/collections/stack"
 	"sort"
 )
 
@@ -142,6 +143,7 @@ func (s Pledge) solve(r Runner, goal Point) {
 		prev = current
 		current = r.moveTo(*next)
 	}
+	r.celebrate()
 }
 
 func (s Pledge) relativeDirection(prev Point, position Position) map[int]*Point {
@@ -194,4 +196,53 @@ func (s Pledge) absoluteDirection(position Position) map[int]*Point {
 		}
 	}
 	return dir
+}
+
+type Dfs struct{}
+
+func (s Dfs) solve(r Runner, goal Point) {
+
+	type node struct {
+		point     Point
+		neighbors []Point
+		parent    *node
+	}
+
+	explored := make(map[Point]bool)
+	current := r.jump()
+
+	routes := stack.New()
+	routes.Push(node{
+		point:     current.point,
+		neighbors: current.neighbors,
+		parent:    nil,
+	})
+	for routes.Len() != 0 {
+
+		current := routes.Pop().(node)
+		explored[current.point] = true
+		if current.point == goal {
+			r.celebrate()
+			break
+		}
+
+		for _, neighbor := range current.neighbors {
+			if explored[neighbor] {
+				continue
+			}
+
+			next := r.moveTo(neighbor)
+			routes.Push(node{
+				point:     next.point,
+				neighbors: next.neighbors,
+				parent:    &current,
+			})
+			break
+		}
+
+		if routes.Len() == 0 {
+			r.moveTo(current.parent.point) // dead end, let's back track
+			routes.Push(*current.parent)
+		}
+	}
 }
