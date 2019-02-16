@@ -5,4 +5,5 @@ go run ./ --id=$(date +%s) --name="kunoichi1" --alg="headless" --verbose=false \
 && go run ./ --id=$(date +%s) --name="kunoichi3" --alg="a*man" --verbose=false \
 && go run ./ --id=$(date +%s) --name="kunoichi4" --alg="a*diag" --verbose=false \
 && go run ./ --id=$(date +%s) --name="kunoichi5" --alg="a*euc" --verbose=false \
-&& go run ./ --id=$(date +%s) --name="kunoichi6" --alg="pledge" --verbose=false
+&& go run ./ --id=$(date +%s) --name="kunoichi6" --alg="pledge" --verbose=false \
+&& go run ./ --id=$(date +%s) --name="kunoichi7" --alg="dfs" --verbose=false \
