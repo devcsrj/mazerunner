@@ -119,4 +119,6 @@ Also, I needed an excuse to write in:
 * [Vue.js](https://vuejs.org/)
 * [Go](https://golang.org/)
 
+## Credits
 
+* Sprite assets from https://www.models-resource.com/
